@@ -35,23 +35,82 @@ public class TripsService : ITripsService
         return doesTripExist;
     }
 
+    public async Task<TripDTO> parseTrip(SqlDataReader reader)
+    {
+        int idOrdinal = reader.GetOrdinal("IdTrip");
+                        int nameOrdinal = reader.GetOrdinal("Name");
+                        int descriptionOrdinal = reader.GetOrdinal("Description");
+                        int dateFromOrdinal = reader.GetOrdinal("DateFrom");
+                        int dateToOrdinal = reader.GetOrdinal("DateTo");
+                        int maxPeopleOrdinal = reader.GetOrdinal("MaxPeople");
+
+                        TripDTO newTrip = new TripDTO()
+                        {
+                            IdTrip = reader.GetInt32(idOrdinal),
+                            Name = reader.GetString(nameOrdinal),
+                            Description = reader.GetString(descriptionOrdinal),
+                            DateFrom = reader.GetDateTime(dateFromOrdinal),
+                            DateTo = reader.GetDateTime(dateToOrdinal),
+                            MaxPeople = reader.GetInt32(maxPeopleOrdinal),
+                            Countries = new List<CountryDTO>()
+                        };
+
+                        var commandCountries =
+                            $"SELECT * FROM Country WHERE IdCountry IN (SELECT IdCountry FROM Country_Trip WHERE IdTrip = {newTrip.IdTrip})";
+                        
+                        using (SqlConnection connCountries = new SqlConnection(_connectionString))
+                        using (SqlCommand cmdCountries = new SqlCommand(commandCountries, connCountries))
+                        {
+                            await connCountries.OpenAsync();
+
+                            using (var readerCountries = await cmdCountries.ExecuteReaderAsync())
+                            {
+                                while (await readerCountries.ReadAsync())
+                                {
+                                    int idOrdinalCountries = readerCountries.GetOrdinal("IdCountry");
+                                    int nameOrdinalCountries = readerCountries.GetOrdinal("Name");
+
+                                    newTrip.Countries.Add(new CountryDTO()
+                                    {
+                                        IdCountry = readerCountries.GetInt32(idOrdinalCountries),
+                                        Name = readerCountries.GetString(nameOrdinalCountries)
+                                    });
+                                }
+                            }
+                        }
+        return newTrip;
+    }
+    
     public async Task<List<TripDTO>> GetTrips()
     {
-        return await GetTrips(null);
+        var trips = new List<TripDTO>();
+
+        string command = "SELECT * FROM Trip";
+
+        using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(command, conn))
+            {
+                await conn.OpenAsync();
+
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        TripDTO newTrip = await parseTrip(reader);
+                        trips.Add(newTrip);
+                    }
+                }
+            }
+        
+        return trips;
     }
 
     public async Task<TripDTO> GetTrip(int tripId)
     {
-        var trips = await GetTrips(tripId);
-        return trips.FirstOrDefault();
-    }
+        TripDTO? newTrip = null;
 
-    private async Task<List<TripDTO>> GetTrips(int? tripId)
-    {
-        var trips = new List<TripDTO>();
+        string command = $"SELECT * FROM Trip WHERE IdTrip = {tripId}";
 
-        string command = "SELECT * FROM Trip" + (tripId == null ? "" : $" WHERE IdTrip = {tripId}");
-        
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
         {
@@ -61,26 +120,11 @@ public class TripsService : ITripsService
             {
                 while (await reader.ReadAsync())
                 {
-                    int idOrdinal = reader.GetOrdinal("IdTrip");
-                    int nameOrdinal = reader.GetOrdinal("Name");
-                    int descriptionOrdinal = reader.GetOrdinal("Description");
-                    int dateFromOrdinal = reader.GetOrdinal("DateFrom");
-                    int dateToOrdinal = reader.GetOrdinal("DateTo");
-                    int maxPeopleOrdinal = reader.GetOrdinal("MaxPeople");
-                    
-                    trips.Add(new TripDTO()
-                    {
-                        Id = reader.GetInt32(idOrdinal),
-                        Name = reader.GetString(nameOrdinal),
-                        Description = reader.GetString(descriptionOrdinal),
-                        DateFrom = reader.GetDateTime(dateFromOrdinal),
-                        DateTo = reader.GetDateTime(dateToOrdinal),
-                        MaxPeople = reader.GetInt32(maxPeopleOrdinal)
-                    });
+                    newTrip = await parseTrip(reader);
                 }
             }
         }
         
-        return trips;
+        return newTrip;
     }
 }

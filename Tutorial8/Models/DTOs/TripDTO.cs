@@ -2,7 +2,7 @@
 
 public class TripDTO
 {
-    public int Id { get; set; }
+    public int IdTrip { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
     public DateTime DateFrom { get; set; }
@@ -13,11 +13,13 @@ public class TripDTO
 
 public class CountryDTO
 {
+    public int IdCountry { get; set; }
     public string Name { get; set; }
 }
 
 public class ClientDTO
 {
+    public int IdClient { get; set; }
     public string FirstName { get; set; }
     public string LastName { get; set; }
     public string Email { get; set; }

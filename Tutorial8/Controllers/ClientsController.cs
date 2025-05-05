@@ -16,7 +16,7 @@ namespace Tutorial8.Controllers
             _clientsService = clientsService;
         }
 
-        [HttpGet("${clientId}/trips")]
+        [HttpGet("{clientId}/trips")]
         public async Task<IActionResult> GetTripsForClient(int clientId)
         {
             var trips = await _clientsService.GetTripsForClient(clientId);
