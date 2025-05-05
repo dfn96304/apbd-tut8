@@ -23,22 +23,25 @@ namespace Tutorial8.Controllers
             return Ok(trips);
         }
 
-        /*[HttpPost]
+        [HttpPost]
         public async Task<IActionResult> NewClient(ClientDTO clientDto)
         {
-            
+            var client = _clientsService.NewClient(clientDto);
+            return Ok(client);
         }
         
         [HttpPut("${clientId}/trips/{tripId}")]
         public async Task<IActionResult> NewTripForClient(int clientId, int tripId)
         {
-            
+            var trip = _clientsService.NewTripForClient(clientId, tripId);
+            return Ok(trip);
         }
         
         [HttpDelete("${clientId}/trips/{tripId}")]
         public async Task<IActionResult> DeleteTripForClient(int clientId, int tripId)
         {
-            
-        }*/
+            var trip = _clientsService.DeleteTripForClient(clientId, tripId);
+            return Ok(trip);
+        }
     }
 }
