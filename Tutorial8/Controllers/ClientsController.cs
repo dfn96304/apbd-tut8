@@ -42,8 +42,13 @@ namespace Tutorial8.Controllers
          * Client details (FirstName, LastName, Email, Telephone, Pesel) must be sent in the request body.
          */
         [HttpPost]
-        public async Task<IActionResult> NewClient(ClientDTO clientDto)
+        public async Task<IActionResult> NewClient([FromBody] ClientDTO clientDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            
             var clientTask = _clientsService.NewClient(clientDto);
             return Created();
         }

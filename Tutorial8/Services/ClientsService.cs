@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using Tutorial8.Models.DTOs;
 
 namespace Tutorial8.Services;
@@ -40,8 +38,8 @@ public class ClientsService : IClientsService
                         IdTrip = reader.GetInt32(idOrdinal),
                         Name = reader.GetString(nameOrdinal),
                         Description = reader.GetString(descriptionOrdinal),
-                        RegisteredAt = reader.GetInt32(paymentDateOrdinal),
-                        PaymentDate = reader.GetInt32(paymentDateOrdinal)
+                        RegisteredAt = reader.GetInt32(registeredAtOrdinal),
+                        PaymentDate = reader.IsDBNull(paymentDateOrdinal) ? null : reader.GetInt32(paymentDateOrdinal)
                     });
                 }
             }
