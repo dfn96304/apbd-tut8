@@ -65,8 +65,9 @@ namespace Tutorial8.Controllers
             {
                 return NotFound($"Trip with id {tripId} not found");
             }
+            
             var tripTask = _clientsService.NewTripForClient(clientId, tripId);
-            return Ok(tripTask);
+            return Ok();
         }
         
         /*
@@ -87,7 +88,7 @@ namespace Tutorial8.Controllers
                 return NotFound($"Trip with id {tripId} not found");
             }
             var tripTask = _clientsService.DeleteTripForClient(clientId, tripId);
-            return Ok(tripTask);
+            return Ok();
         }
     }
 }
