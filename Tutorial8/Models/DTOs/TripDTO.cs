@@ -11,18 +11,11 @@ public class TripDTO
     public List<CountryDTO> Countries { get; set; }
 }
 
-public class CountryDTO
+public class Client_TripDTO
 {
-    public int IdCountry { get; set; }
+    public int IdTrip { get; set; }
     public string Name { get; set; }
-}
-
-public class ClientDTO
-{
-    public int IdClient { get; set; }
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string Email { get; set; }
-    public string Telephone { get; set; }
-    public string Pesel { get; set; }
+    public string Description { get; set; }
+    public int RegisteredAt { get; set; }
+    public int? PaymentDate { get; set; }
 }

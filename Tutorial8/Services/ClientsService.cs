@@ -7,15 +7,17 @@ public class ClientsService : IClientsService
 {
     private readonly string _connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=master;Integrated Security=True;";
     
-    public async Task<List<TripDTO>> GetTripsForClient(int clientId)
+    public async Task<List<Client_TripDTO>> GetTripsForClient(int clientId)
     {
-        var trips = new List<TripDTO>();
+        var trips = new List<Client_TripDTO>();
         
-        string command = $"SELECT * FROM Trip WHERE IdTrip IN (SELECT IdTrip FROM Client_Trip WHERE IdClient = {clientId})";
+        string command = @"SELECT * FROM Trip INNER JOIN Client_Trip ON Trip.IdTrip = Client_Trip.IdTrip WHERE IdClient = @clientId";
         
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
         {
+            cmd.Parameters.AddWithValue("@clientId", clientId);
+            
             await conn.OpenAsync();
 
             using (var reader = await cmd.ExecuteReaderAsync())
@@ -24,11 +26,18 @@ public class ClientsService : IClientsService
                 {
                     int idOrdinal = reader.GetOrdinal("IdTrip");
                     int nameOrdinal = reader.GetOrdinal("Name");
+                    int descriptionOrdinal = reader.GetOrdinal("Description");
                     
-                    trips.Add(new TripDTO()
+                    int registeredAtOrdinal = reader.GetOrdinal("RegisteredAt");
+                    int paymentDateOrdinal = reader.GetOrdinal("PaymentDate");
+                    
+                    trips.Add(new Client_TripDTO()
                     {
                         IdTrip = reader.GetInt32(idOrdinal),
-                        Name = reader.GetString(nameOrdinal)
+                        Name = reader.GetString(nameOrdinal),
+                        Description = reader.GetString(descriptionOrdinal),
+                        RegisteredAt = reader.GetInt32(paymentDateOrdinal),
+                        PaymentDate = reader.GetInt32(paymentDateOrdinal)
                     });
                 }
             }
@@ -39,40 +48,55 @@ public class ClientsService : IClientsService
     
     public async Task NewClient(ClientDTO clientDto)
     {
-        string command = $"INSERT INTO Client (IdClient, FirstName, LastName, Email, Telephone, Pesel) VALUES ({clientDto.IdClient}, {clientDto.FirstName}, {clientDto.LastName}, {clientDto.Email}, {clientDto.Telephone}, {clientDto.Pesel})";
+        string command = @"INSERT INTO Client (FirstName, LastName, Email, Telephone, Pesel) VALUES (@FirstName, @LastName, @Email, @Telephone, @Pesel)";
+        
+        Console.WriteLine(command);
         
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
         {
+            cmd.Parameters.AddWithValue("@IdClient",   clientDto.IdClient);
+            cmd.Parameters.AddWithValue("@FirstName",  clientDto.FirstName);
+            cmd.Parameters.AddWithValue("@LastName",   clientDto.LastName);
+            cmd.Parameters.AddWithValue("@Email",      clientDto.Email);
+            cmd.Parameters.AddWithValue("@Telephone",  clientDto.Telephone);
+            cmd.Parameters.AddWithValue("@Pesel",      clientDto.Pesel);
+
             await conn.OpenAsync();
-            
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync();
         }
     }
 
     public async Task NewTripForClient(int clientId, int tripId)
     {
-        string command = $"INSERT INTO Client_Trip (IdClient, TripId) VALUES ({clientId}, {tripId})";
+        DateTime currentDate = DateTime.Now;
+        
+        string command = @"INSERT INTO Client_Trip (IdClient, TripId, RegisteredAt) VALUES (@clientId, @tripId, @currentDate)";
         
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
         {
+            cmd.Parameters.AddWithValue("@IdClient",   clientId);
+            cmd.Parameters.AddWithValue("@TripId", tripId);
+            cmd.Parameters.AddWithValue("@currentDate", currentDate);
+
             await conn.OpenAsync();
-            
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync();
         }
     }
 
     public async Task DeleteTripForClient(int clientId, int tripId)
     {
-        string command = $"DELETE FROM Client_Trip (IdClient, TripId) WHERE IdClient = {clientId} AND IdTrip = {tripId}";
+        string command = @"DELETE FROM Client_Trip (IdClient, TripId) WHERE IdClient = @clientId AND IdTrip = @tripId";
         
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
         {
+            cmd.Parameters.AddWithValue("@IdClient",   clientId);
+            cmd.Parameters.AddWithValue("@TripId", tripId);
+
             await conn.OpenAsync();
-            
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync();
         }
     }
 }

@@ -7,34 +7,6 @@ public class TripsService : ITripsService
 {
     private readonly string _connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=master;Integrated Security=True;";
 
-    public async Task<bool> DoesTripExist(int id)
-    {
-        bool doesTripExist = false;
-
-        string command = $"SELECT COUNT(*) AS CountOfTripsWithId FROM Trip WHERE IdTrip = {id}";
-        
-        using (SqlConnection conn = new SqlConnection(_connectionString))
-        using (SqlCommand cmd = new SqlCommand(command, conn))
-        {
-            await conn.OpenAsync();
-
-            using (var reader = await cmd.ExecuteReaderAsync())
-            {
-                while (await reader.ReadAsync())
-                {
-                    int idOrdinal = reader.GetOrdinal("CountOfTripsWithId");
-                    
-                    int countOfTripsWithId = reader.GetInt32(idOrdinal);
-                    
-                    if(countOfTripsWithId > 0) doesTripExist = true;
-                    else doesTripExist = false;
-                }
-            }
-        }
-        
-        return doesTripExist;
-    }
-
     public async Task<TripDTO> parseTrip(SqlDataReader reader)
     {
         int idOrdinal = reader.GetOrdinal("IdTrip");
@@ -56,11 +28,13 @@ public class TripsService : ITripsService
                         };
 
                         var commandCountries =
-                            $"SELECT * FROM Country WHERE IdCountry IN (SELECT IdCountry FROM Country_Trip WHERE IdTrip = {newTrip.IdTrip})";
+                            @"SELECT * FROM Country WHERE IdCountry IN (SELECT IdCountry FROM Country_Trip WHERE IdTrip = @IdTrip)";
                         
                         using (SqlConnection connCountries = new SqlConnection(_connectionString))
                         using (SqlCommand cmdCountries = new SqlCommand(commandCountries, connCountries))
                         {
+                            cmdCountries.Parameters.AddWithValue("@IdTrip", newTrip.IdTrip);
+                            
                             await connCountries.OpenAsync();
 
                             using (var readerCountries = await cmdCountries.ExecuteReaderAsync())
@@ -109,11 +83,13 @@ public class TripsService : ITripsService
     {
         TripDTO? newTrip = null;
 
-        string command = $"SELECT * FROM Trip WHERE IdTrip = {tripId}";
+        string command = @"SELECT * FROM Trip WHERE IdTrip = @IdTrip";
 
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
         {
+            cmd.Parameters.AddWithValue("@IdTrip", tripId);
+            
             await conn.OpenAsync();
 
             using (var reader = await cmd.ExecuteReaderAsync())
